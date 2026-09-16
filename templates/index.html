@@ -3,27 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplication Table</title>
+    <meta name="description" content="Multiplication Table Generator — A sleek dark dashboard to generate multiplication tables instantly.">
+    <title>Multiplication Table · SVD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<div class="container">
-    <h1>Multiplication Table By SHASHANK V</h1>
+    <!-- Background ambient blobs -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
 
-    <form method="POST">
-        <input type="number" name="number" placeholder="Enter a number" required>
-        <button type="submit">Generate Table</button>
-    </form>
+    <div class="shell">
 
-    {% if table %}
-    <div class="result">
-        {% for line in table %}
-            <p>{{ line }}</p>
-        {% endfor %}
+        <!-- Top bar dots (macOS window style) -->
+        <div class="window-bar">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <span class="window-title">SVD · Multiplication Table</span>
+        </div>
+
+        <!-- Stat cards row -->
+        <div class="stat-row">
+            <div class="stat-card" id="card-number">
+                <p class="stat-label">Current Number</p>
+                <h2 class="stat-value" id="display-number">—</h2>
+                <span class="stat-badge" id="badge-range">× 1 to 10</span>
+            </div>
+            <div class="stat-card" id="card-entries">
+                <p class="stat-label">Total Entries</p>
+                <h2 class="stat-value">{% if table %}10{% else %}0{% endif %}</h2>
+                <span class="stat-badge">rows generated</span>
+            </div>
+            <div class="stat-card" id="card-status">
+                <p class="stat-label">Status</p>
+                <h2 class="stat-value status-text">{% if table %}ready{% else %}idle{% endif %}</h2>
+                <span class="stat-badge">{% if table %}v2.14 stable{% else %}awaiting input{% endif %}</span>
+            </div>
+        </div>
+
+        <!-- Trace / insight bar -->
+        <div class="trace-bar">
+            <span class="trace-dot"></span>
+            <span class="trace-label">TRACE · SVD ENGINE</span>
+            {% if table %}
+            <p class="trace-text">Table generated successfully — <strong>10 rows</strong> computed. Enter a new number to regenerate.</p>
+            {% else %}
+            <p class="trace-text">Enter any number below and hit <strong>Generate</strong> to compute its multiplication table instantly.</p>
+            {% endif %}
+        </div>
+
+        <!-- Form -->
+        <form method="POST" class="input-row" id="table-form">
+            <input
+                type="number"
+                name="number"
+                id="number-input"
+                placeholder="Enter a number…"
+                required
+                autocomplete="off"
+            >
+            <button type="submit" id="generate-btn">Generate Table</button>
+        </form>
+
+        <!-- Results -->
+        {% if table %}
+        <div class="result-grid" id="result-grid">
+            {% for line in table %}
+            <div class="result-card" style="--i: {{ loop.index }}">
+                <span class="result-text">{{ line }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <p class="footer-text">Built by <strong>Shashank V</strong> · SVD Engine</p>
     </div>
-    {% endif %}
-</div>
 
+    <script>
+        // Live preview of typed number in the stat card
+        const input = document.getElementById('number-input');
+        const display = document.getElementById('display-number');
+
+        {% if table %}
+        // If table already exists, show the submitted number from first entry
+        const firstLine = {{ table | tojson }}[0];
+        const match = firstLine.match(/^(\d+)/);
+        if (match) display.textContent = match[1];
+        {% endif %}
+
+        if (input) {
+            input.addEventListener('input', () => {
+                display.textContent = input.value || '—';
+            });
+        }
+    </script>
 </body>
 </html>
