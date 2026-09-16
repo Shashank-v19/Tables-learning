@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Multiplication Table Generator — A sleek dark dashboard to generate multiplication tables instantly.">
-    <title>Multiplication Table · SVD</title>
+    <meta name="description" content="Fun Multiplication Table Generator for kids — learn tables with animations!">
+    <title>Times Table Fun · SVD</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -12,9 +12,16 @@
 </head>
 <body>
 
+    <!-- Floating star particles (injected by JS) -->
+    <div id="star-field"></div>
+
+    <!-- Confetti container -->
+    <div id="confetti-box"></div>
+
     <!-- Background ambient blobs -->
     <div class="bg-blob blob-1"></div>
     <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
 
     <div class="shell">
 
@@ -23,36 +30,46 @@
             <span class="dot dot-red"></span>
             <span class="dot dot-yellow"></span>
             <span class="dot dot-green"></span>
-            <span class="window-title">SVD · Multiplication Table</span>
+            <span class="window-title">🌟 SVD · Times Table Fun</span>
+        </div>
+
+        <!-- Mascot + Hero heading -->
+        <div class="hero">
+            <div class="mascot" id="mascot">🧮</div>
+            <div class="hero-text">
+                <h1 class="hero-title rainbow-text">Learn Your Tables!</h1>
+                <p class="hero-sub">Enter a number &amp; watch the magic ✨</p>
+            </div>
+            <div class="mascot mascot-right" id="mascot-right">⭐</div>
         </div>
 
         <!-- Stat cards row -->
         <div class="stat-row">
             <div class="stat-card" id="card-number">
-                <p class="stat-label">Current Number</p>
-                <h2 class="stat-value" id="display-number">—</h2>
-                <span class="stat-badge" id="badge-range">× 1 to 10</span>
+                <p class="stat-label">🔢 Your Number</p>
+                <h2 class="stat-value rainbow-text" id="display-number">—</h2>
+                <span class="stat-badge">× 1 to 10</span>
             </div>
             <div class="stat-card" id="card-entries">
-                <p class="stat-label">Total Entries</p>
+                <p class="stat-label">📋 Total Rows</p>
                 <h2 class="stat-value">{% if table %}10{% else %}0{% endif %}</h2>
-                <span class="stat-badge">rows generated</span>
+                <span class="stat-badge">{% if table %}🎉 done!{% else %}waiting…{% endif %}</span>
             </div>
             <div class="stat-card" id="card-status">
-                <p class="stat-label">Status</p>
+                <p class="stat-label">✅ Status</p>
                 <h2 class="stat-value status-text">{% if table %}ready{% else %}idle{% endif %}</h2>
-                <span class="stat-badge">{% if table %}v2.14 stable{% else %}awaiting input{% endif %}</span>
+                <span class="stat-badge">{% if table %}🚀 v2.14 stable{% else %}💤 awaiting{% endif %}</span>
             </div>
         </div>
 
-        <!-- Trace / insight bar -->
+        <!-- Trace bar -->
         <div class="trace-bar">
             <span class="trace-dot"></span>
-            <span class="trace-label">TRACE · SVD ENGINE</span>
+            <span class="trace-label">💡 HINT</span>
             {% if table %}
-            <p class="trace-text">Table generated successfully — <strong>10 rows</strong> computed. Enter a new number to regenerate.</p>
+            <p class="trace-text">🎊 Table ready — <strong>10 rows</strong> generated! Try another number!</p>
             {% else %}
-            <p class="trace-text">Enter any number below and hit <strong>Generate</strong> to compute its multiplication table instantly.</p>
+            <p class="trace-text">Type any number and press <strong>Generate</strong> to see its multiplication table!</p>
             {% endif %}
         </div>
 
@@ -62,18 +79,27 @@
                 type="number"
                 name="number"
                 id="number-input"
-                placeholder="Enter a number…"
+                placeholder="🔢 Type a number…"
                 required
                 autocomplete="off"
+                min="1"
+                max="100"
             >
-            <button type="submit" id="generate-btn">Generate Table</button>
+            <button type="submit" id="generate-btn">
+                <span class="btn-icon">🚀</span>
+                <span>Generate!</span>
+            </button>
         </form>
 
         <!-- Results -->
         {% if table %}
+        <div class="celebrate-banner" id="celebrate-banner">
+            🎉 Awesome! Here's the table! 🎉
+        </div>
         <div class="result-grid" id="result-grid">
             {% for line in table %}
-            <div class="result-card" style="--i: {{ loop.index }}">
+            <div class="result-card" style="--i: {{ loop.index }}" id="rcard-{{ loop.index }}">
+                <span class="result-emoji">{{ ["🌟","⭐","💫","✨","🔥","🎯","💥","🏆","🎈","🎊"][loop.index0] }}</span>
                 <span class="result-text">{{ line }}</span>
             </div>
             {% endfor %}
@@ -81,26 +107,100 @@
         {% endif %}
 
         <!-- Footer -->
-        <p class="footer-text">Built by <strong>Shashank V</strong> · SVD Engine</p>
+        <p class="footer-text">Built with ❤️ by <strong>Shashank V</strong> · SVD Engine</p>
     </div>
 
     <script>
-        // Live preview of typed number in the stat card
-        const input = document.getElementById('number-input');
-        const display = document.getElementById('display-number');
-
-        {% if table %}
-        // If table already exists, show the submitted number from first entry
-        const firstLine = {{ table | tojson }}[0];
-        const match = firstLine.match(/^(\d+)/);
-        if (match) display.textContent = match[1];
-        {% endif %}
-
-        if (input) {
-            input.addEventListener('input', () => {
-                display.textContent = input.value || '—';
-            });
+    /* ── Floating Stars ── */
+    (function spawnStars() {
+        const field = document.getElementById('star-field');
+        const EMOJIS = ['⭐','🌟','💫','✨','🔥','🎈','🎊','🏆','❤️','💡'];
+        for (let i = 0; i < 22; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            s.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+            s.style.cssText = `
+                left:${Math.random()*100}vw;
+                top:${Math.random()*100}vh;
+                font-size:${12 + Math.random()*18}px;
+                animation-duration:${4 + Math.random()*6}s;
+                animation-delay:${Math.random()*5}s;
+                opacity:${0.25 + Math.random()*0.45};
+            `;
+            field.appendChild(s);
         }
+    })();
+
+    /* ── Confetti burst ── */
+    function launchConfetti() {
+        const box   = document.getElementById('confetti-box');
+        const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff6bd6','#ffffff'];
+        box.innerHTML = '';
+        for (let i = 0; i < 80; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti-piece';
+            c.style.cssText = `
+                left:${Math.random()*100}vw;
+                background:${colors[Math.floor(Math.random()*colors.length)]};
+                width:${6+Math.random()*8}px;
+                height:${6+Math.random()*8}px;
+                border-radius:${Math.random()>0.5?'50%':'3px'};
+                animation-duration:${1.2+Math.random()*1.5}s;
+                animation-delay:${Math.random()*0.6}s;
+            `;
+            box.appendChild(c);
+        }
+        setTimeout(() => box.innerHTML = '', 3000);
+    }
+
+    /* ── Live number display ── */
+    const input   = document.getElementById('number-input');
+    const display = document.getElementById('display-number');
+
+    {% if table %}
+    const firstLine = {{ table | tojson }}[0];
+    const match = firstLine.match(/^(\d+)/);
+    if (match) display.textContent = match[1];
+    launchConfetti();
+    {% endif %}
+
+    if (input) {
+        input.addEventListener('input', () => {
+            display.textContent = input.value || '—';
+        });
+    }
+
+    /* ── Button click effect ── */
+    const form = document.getElementById('table-form');
+    const btn  = document.getElementById('generate-btn');
+    if (form && btn) {
+        form.addEventListener('submit', () => {
+            btn.classList.add('btn-loading');
+            btn.innerHTML = '<span class="btn-icon spin">⚙️</span><span>Working…</span>';
+        });
+    }
+
+    /* ── Hover sparkle on result cards ── */
+    document.querySelectorAll('.result-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            const spark = document.createElement('span');
+            spark.className = 'sparkle';
+            spark.textContent = ['✨','💥','⭐','🌟'][Math.floor(Math.random()*4)];
+            card.appendChild(spark);
+            setTimeout(() => spark.remove(), 700);
+        });
+    });
+
+    /* ── Mascot bounce on hover over hero ── */
+    const mascot = document.getElementById('mascot');
+    const mascotR = document.getElementById('mascot-right');
+    [mascot, mascotR].forEach(m => {
+        if (!m) return;
+        m.addEventListener('click', () => {
+            m.classList.add('mascot-spin');
+            setTimeout(() => m.classList.remove('mascot-spin'), 800);
+        });
+    });
     </script>
 </body>
 </html>
