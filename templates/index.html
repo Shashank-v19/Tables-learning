@@ -25,12 +25,15 @@
 
     <div class="shell">
 
-        <!-- Top bar dots (macOS window style) -->
+        <!-- Top bar with SVD Logo -->
         <div class="window-bar">
-            <span class="dot dot-red"></span>
-            <span class="dot dot-yellow"></span>
-            <span class="dot dot-green"></span>
-            <span class="window-title">🌟 SVD · Times Table Fun</span>
+            <img
+                src="{{ url_for('static', filename='svd_logo.jpg') }}"
+                alt="SVD Logo"
+                class="logo-img"
+                id="logo-img"
+            >
+            <span class="window-title">SVD · Times Table Fun</span>
         </div>
 
         <!-- Mascot + Hero heading -->
@@ -58,7 +61,7 @@
             <div class="stat-card" id="card-status">
                 <p class="stat-label">✅ Status</p>
                 <h2 class="stat-value status-text">{% if table %}ready{% else %}idle{% endif %}</h2>
-                <span class="stat-badge">{% if table %}🚀 v2.14 stable{% else %}💤 awaiting{% endif %}</span>
+                <span class="stat-badge">{% if table %}🚀 stable{% else %}💤 awaiting{% endif %}</span>
             </div>
         </div>
 
@@ -191,16 +194,24 @@
         });
     });
 
-    /* ── Mascot bounce on hover over hero ── */
-    const mascot = document.getElementById('mascot');
-    const mascotR = document.getElementById('mascot-right');
-    [mascot, mascotR].forEach(m => {
-        if (!m) return;
-        m.addEventListener('click', () => {
-            m.classList.add('mascot-spin');
-            setTimeout(() => m.classList.remove('mascot-spin'), 800);
+    /* ── Logo spin on click ── */
+    const logo = document.getElementById('logo-img');
+    if (logo) {
+        logo.addEventListener('click', () => {
+            logo.classList.add('logo-spin');
+            setTimeout(() => logo.classList.remove('logo-spin'), 700);
         });
-    });
+    }
+
+    /* ── Mascot bounce on click ── */
+    [document.getElementById('mascot'), document.getElementById('mascot-right')]
+        .forEach(m => {
+            if (!m) return;
+            m.addEventListener('click', () => {
+                m.classList.add('mascot-spin');
+                setTimeout(() => m.classList.remove('mascot-spin'), 800);
+            });
+        });
     </script>
 </body>
 </html>
